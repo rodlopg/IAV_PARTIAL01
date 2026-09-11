@@ -19,7 +19,21 @@ public class SteeringMovement : MonoBehaviour
     public void Flee(Vector3 location)
     {
         Vector3 fleeVector = location - this.transform.position;
-        if (agent != null) agent.SetDestination(this.transform.position - fleeVector);
+        Vector3 targetFleePoint = this.transform.position - fleeVector;
+        
+        if (agent != null) 
+        {
+            NavMeshHit hit;
+            if (NavMesh.SamplePosition(targetFleePoint, out hit, 5f, NavMesh.AllAreas))
+            {
+                agent.SetDestination(hit.position);
+            }
+            else
+            {
+                // If the exact opposite direction is off-mesh, just try to move away slightly
+                agent.SetDestination(this.transform.position + (this.transform.position - location).normalized * 2f);
+            }
+        }
     }
 
     public void Pursue(){
@@ -48,9 +62,10 @@ public class SteeringMovement : MonoBehaviour
         Flee(target.transform.position + target.transform.forward * lookAhead * 10);
 
     }
+    private Vector3 wanderTarget = Vector3.zero;
+
     public void Wander()
     {
-        Vector3 wanderTarget = Vector3.zero;
         float wanderRadius = 10;
         float wanderDistance = 20;
         float wanderJitter = 5;
@@ -61,9 +76,25 @@ public class SteeringMovement : MonoBehaviour
         wanderTarget *= wanderRadius;
 
         Vector3 targetLocal = wanderTarget + new Vector3(0,0,wanderDistance);
-        Vector3 targetWorld = this.gameObject.transform.InverseTransformVector(targetLocal);
-        Seek(targetWorld);
+        Vector3 targetWorld = this.gameObject.transform.TransformPoint(targetLocal);
+        
+        NavMeshHit hit;
+        if (NavMesh.SamplePosition(targetWorld, out hit, 10f, NavMesh.AllAreas))
+        {
+            // If the sampled position is too close, we might be facing a wall.
+            if (Vector3.Distance(transform.position, hit.position) < 2f)
+            {
+                wanderTarget = -wanderTarget; // Reverse direction
+            }
+            Seek(hit.position);
+        }
+        else
+        {
+            wanderTarget = -wanderTarget;
+            Seek(this.transform.position); // stop or stay in place briefly
+        }
     }
+
     protected static GameObject[] getHidingSpots(string tag)
     {
         GameObject[] hidingSpots = GameObject.FindGameObjectsWithTag(tag);

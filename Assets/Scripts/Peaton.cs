@@ -12,7 +12,7 @@ public class Peaton : SteeringMovement
     protected override void Update()
     {
         base.Update();
-        
+
         Ladron[] thieves = FindObjectsOfType<Ladron>();
         Ladron closestThief = null;
         float closestDist = detectionRadius;
@@ -34,6 +34,22 @@ public class Peaton : SteeringMovement
         else
         {
             Wander();
+        }
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.GetComponent<Ladron>() != null)
+        {
+            Destroy(gameObject);
+        }
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.GetComponent<Ladron>() != null)
+        {
+            Destroy(gameObject);
         }
     }
 }

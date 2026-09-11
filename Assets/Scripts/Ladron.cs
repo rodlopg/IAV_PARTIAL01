@@ -55,7 +55,7 @@ public class Ladron : SteeringMovement
         foreach (var p in police)
         {
             float dist = Vector3.Distance(transform.position, p.transform.position);
-            if (dist < closestDist)
+            if (dist < closestDist && dist <= detectionRadius)
             {
                 closestDist = dist;
                 closest = p.gameObject;
@@ -66,7 +66,7 @@ public class Ladron : SteeringMovement
         if (player != null)
         {
             float dist = Vector3.Distance(transform.position, player.transform.position);
-            if (dist < closestDist)
+            if (dist < closestDist && dist <= detectionRadius)
             {
                 closestDist = dist;
                 closest = player;
@@ -74,5 +74,21 @@ public class Ladron : SteeringMovement
         }
 
         return closest;
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.GetComponent<Police>() != null || collision.gameObject.CompareTag("Player"))
+        {
+            Destroy(gameObject);
+        }
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.GetComponent<Police>() != null || other.CompareTag("Player"))
+        {
+            Destroy(gameObject);
+        }
     }
 }
